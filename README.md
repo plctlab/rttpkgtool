@@ -45,12 +45,12 @@ $ cd rttpkgtool
 示例如下:
 
 ``` shell
-$ DPT_PATH_KERNEL=/home/u/rt-thread DPT_BOARD_TYPE=duo256m DPT_PATH_OUTPUT=/home/u/rttokgtool/output ./mkpkg.sh -a
+$ DPT_PATH_KERNEL=/home/u/rt-thread DPT_BOARD_TYPE=duo256m DPT_PATH_OUTPUT=/home/u/rttokgtool/output ./script/mkpkg.sh -a
 ```
 
 或者
 
 ``` shell
-$ DPT_PATH_KERNEL=/home/u/rt-thread ./mkpkg.sh
+$ DPT_PATH_KERNEL=/home/u/rt-thread ./script/mkpkg.sh
 ```
 
