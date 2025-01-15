@@ -16,7 +16,7 @@ u-boot-tools 包含了打包需要的 mkimage, xz-utils 包含了打包需要的
 ## 拉取 `rttpkgtool` 工具到本地
 
 ``` shell 
-$ git clone git@github.com:unicornx/rttpkgtool.git
+$ git clone git@github.com:plctlab/rttpkgtool.git
 ```
 
 进入 rttpkgtool 目录，后面的操作都在该目录下进行。
