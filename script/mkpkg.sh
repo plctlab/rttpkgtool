@@ -5,11 +5,11 @@
 
 DPT_PATH=$(realpath $(dirname $0)/..)
 
-source ${DPT_PATH}/script/board_types.sh	
+source ${DPT_PATH}/script/board_types.sh
 
 function usage() {
         echo "Usage:"
-        echo "  [DPT_PATH_KERNEL=<path_kernel>] [DPT_BOARD_TYPE=<board_type>] [DPT_PATH_OUTPUT=<path_output>] ./mkpkg.sh [-h|-l|-b|-a]"
+        echo "  DPT_PATH_KERNEL=<path_kernel> [DPT_BOARD_TYPE=<board_type>] [DPT_PATH_OUTPUT=<path_output>] ./mkpkg.sh [-h|-l|-b|-a]"
         echo "  -h: display usage"
         echo "  -l: make little"
         echo "  -b: make big"

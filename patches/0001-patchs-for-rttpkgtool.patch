@@ -1,0 +1,87 @@
+From cb1c710fcf375423f137218091f534f6cac98e67 Mon Sep 17 00:00:00 2001
+From: Chen Wang <unicorn_wang@outlook.com>
+Date: Thu, 9 Jan 2025 17:08:10 +0800
+Subject: [PATCH] patchs for rttpkgtool/prebuild
+
+Mask out pinmux setting for u-boot. Otherwise some
+pin function may not work well.
+
+Leave kernel to set the pinmux.
+
+Signed-off-by: Chen Wang <unicorn_wang@outlook.com>
+---
+ .../cv180x/cv1800b_milkv_duo_sd/u-boot/cvi_board_init.c      | 3 ++-
+ .../cv181x/cv1812cp_milkv_duo256m_sd/u-boot/cvi_board_init.c | 3 ++-
+ .../cv181x/cv1813h_milkv_duos_sd/u-boot/cvi_board_init.c     | 5 ++++-
+ 3 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/build/boards/cv180x/cv1800b_milkv_duo_sd/u-boot/cvi_board_init.c b/build/boards/cv180x/cv1800b_milkv_duo_sd/u-boot/cvi_board_init.c
+index 74941cb09..ef60fd317 100644
+--- a/build/boards/cv180x/cv1800b_milkv_duo_sd/u-boot/cvi_board_init.c
++++ b/build/boards/cv180x/cv1800b_milkv_duo_sd/u-boot/cvi_board_init.c
+@@ -1,5 +1,6 @@
+ int cvi_board_init(void)
+ {
++#if 0
+ 	// sensor mclk reset
+ 	PINMUX_CONFIG(PAD_MIPIRX0P, CAM_MCLK0); // Camera MCLK0
+ 	PINMUX_CONFIG(PAD_MIPIRX1N, XGPIOC_8);  // Camera Reset
+@@ -40,6 +41,6 @@ int cvi_board_init(void)
+ 	PINMUX_CONFIG(SD1_CMD, SPI2_SDO);
+ 	PINMUX_CONFIG(SD1_D0, SPI2_SDI);
+ 	PINMUX_CONFIG(SD1_D3, SPI2_CS_X);
+-
++#endif
+ 	return 0;
+ }
+diff --git a/build/boards/cv181x/cv1812cp_milkv_duo256m_sd/u-boot/cvi_board_init.c b/build/boards/cv181x/cv1812cp_milkv_duo256m_sd/u-boot/cvi_board_init.c
+index c9c722236..6e1fa9671 100644
+--- a/build/boards/cv181x/cv1812cp_milkv_duo256m_sd/u-boot/cvi_board_init.c
++++ b/build/boards/cv181x/cv1812cp_milkv_duo256m_sd/u-boot/cvi_board_init.c
+@@ -1,5 +1,6 @@
+ int cvi_board_init(void)
+ {
++#if 0
+ 	// Camera
+ 	PINMUX_CONFIG(PAD_MIPI_TXM1, IIC2_SDA);    // GP10
+ 	PINMUX_CONFIG(PAD_MIPI_TXP1, IIC2_SCL);    // GP11
+@@ -41,6 +42,6 @@ int cvi_board_init(void)
+ 	// ADC pins set to GPIO
+ 	PINMUX_CONFIG(ADC1, XGPIOB_3);             // GP26 (ADC1)
+ 	PINMUX_CONFIG(USB_VBUS_DET, XGPIOB_6);     // GP27 (ADC2)
+-
++#endif
+ 	return 0;
+ }
+\ No newline at end of file
+diff --git a/build/boards/cv181x/cv1813h_milkv_duos_sd/u-boot/cvi_board_init.c b/build/boards/cv181x/cv1813h_milkv_duos_sd/u-boot/cvi_board_init.c
+index 6552f8da3..f414f42ee 100644
+--- a/build/boards/cv181x/cv1813h_milkv_duos_sd/u-boot/cvi_board_init.c
++++ b/build/boards/cv181x/cv1813h_milkv_duos_sd/u-boot/cvi_board_init.c
+@@ -1,11 +1,14 @@
++#if 0
+ static void set_rtc_register_for_power(void)
+ {
+ 	printf("set_rtc_register_for_power\n");
+ 	mmio_write_32(0x050260D0, 0x7);
+ }
++#endif
+ 
+ int cvi_board_init(void)
+ {
++#if 0
+ 	// Camera
+ 	PINMUX_CONFIG(CAM_MCLK0, CAM_MCLK0);
+ 	PINMUX_CONFIG(IIC3_SCL, IIC3_SCL);
+@@ -51,7 +54,7 @@ int cvi_board_init(void)
+ 	PINMUX_CONFIG(PWR_BUTTON1, EPHY_SPD_LED);
+ 
+ 	set_rtc_register_for_power();
+-
++#endif
+ 	return 0;
+ }
+ 
+-- 
+2.34.1
+

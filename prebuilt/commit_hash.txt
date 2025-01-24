@@ -1,0 +1,5 @@
+########################################################################################
+This file is used to record the commit hash value corresponding to the latest prebuilds.
+The corresponding repository is: https://github.com/milkv-duo/duo-buildroot-sdk.git
+########################################################################################
+8e970aa49decfddc6f7f5bd66d0e798ffcf712c4
