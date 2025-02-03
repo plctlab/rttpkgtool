@@ -59,12 +59,12 @@ function package_little() {
 }
 
 function package_big() {
-	if [ ! command -v mkimage &> /dev/null ]; then
+	if ! command -v mkimage > /dev/null 2>&1 ; then
 		echo "ERROR: mkimage is missing. Run 'apt install u-boot-tools' to install it." 
 		exit 1
 	fi
 
-	if [ ! command -v lzma &> /dev/null ]; then
+	if ! command -v lzma > /dev/null 2>&1 ; then
 		echo "ERROR: lzma is missing. Run 'apt install xz-utils' to install it." 
 		exit 1
 	fi
