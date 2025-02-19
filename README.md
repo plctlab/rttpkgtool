@@ -29,12 +29,13 @@ $ cd rttpkgtool
 
 命令的格式为:
 
-`DPT_PATH_KERNEL=<path_kernel> [DPT_BOARD_TYPE=<board_type>] [DPT_PATH_OUTPUT=<path_output>] ./mkpkg.sh  [-h/-l/-b/-a]`                                              
+`DPT_PATH_KERNEL=<path_kernel> [DPT_BOARD_TYPE=<board_type>] [DPT_PATH_OUTPUT=<path_output>] [DPT_ARCH=<select_arch>] ./mkpkg.sh  [-h/-l/-b/-a]`                                              
 
 - 含有 `[]` 的项是可以省略的 
 - 环境变量 `DPT_PATH_KERNEL`(必选): rt-thread 仓库的绝对路径（路径名包括 `rt-thread`），通过该路径，package tool 才可以找到 RT-Thread 的 kernel image，即 `rtthread.bin`。
 - 环境变量 `DPT_BOARD_TYPE`（可选）: 开发板的类型，目前支持 `duo`，`duo256m`, `duos` 三种开发板类型。不指定该选项，默认采用 `duo256m`。
 - 环境变量 `DPT_PATH_OUTPUT`（可选）: 输出的绝对路径。各个板子的输出再按照子目录存放在 `DPT_PATH_OUTPUT` 下。不指定该选项，默认输出在 `rttpkgtool/output` 下。
+- 环境变量 `DPT_ARCH`（可选）: 选择芯片大核架构，可选择 `riscv` 和 `arm` 两种架构。不指定该选项，默认采用 `riscv`。
 - 命令行选项 `-h`/`-l`/`-b`/`-a`: 
   - `-h`: 打印帮助信息后直接退出。
   - `-l`：只对小核进行打包，即只生成 `fip.bin`。
@@ -45,13 +46,18 @@ $ cd rttpkgtool
 示例如下:
 
 ``` shell
-$ DPT_PATH_KERNEL=/home/u/rt-thread DPT_BOARD_TYPE=duo256m DPT_PATH_OUTPUT=/home/u/rttokgtool/output ./script/mkpkg.sh -a
+$ DPT_PATH_KERNEL=/home/u/rt-thread DPT_BOARD_TYPE=duo256m DPT_PATH_OUTPUT=/home/u/rttokgtool/output DPT_ARCH=riscv./script/mkpkg.sh -a
 ```
 
 或者
 
 ``` shell
 $ DPT_PATH_KERNEL=/home/u/rt-thread ./script/mkpkg.sh
+```
+
+如需使用 Cortex-A53 作为大核，请添加 DPT_ARCH=arm 参数，如下
+``` shell
+$ DPT_PATH_KERNEL=/home/u/rt-thread DPT_ARCH=arm ./script/mkpkg.sh
 ```
 
 ## 更新 prebuild 文件
@@ -70,3 +76,4 @@ PATH_DUO_SDK=<path_duo_sdk> ./prebuild.sh
 
 `prebuild.sh` 会在构建成功后更新 rttpkgtool 仓库的 `prebuilt` 目录，并将构建 duo-buildroot-sdk 对应的 commit hash 值记录在 `prebuilt/commit_hash.txt` 下，方便以后回溯。
 
+FIXME: 因为目前我们并没有长期维护 ARM 大核的计划，所以对于 arm 的 prebuild 文件，并没有和 riscv 一样基于 duo sdk 中从源码构建，而是简化处理，直接借用了 RT-Thread 仓库中的现有 prebuild 文件。所以目前更新 prebuild 文件时只涉及 riscv 的内容。

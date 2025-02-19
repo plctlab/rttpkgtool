@@ -28,7 +28,7 @@ function package_little() {
 
 	local PATH_PREBUILT="${DPT_PATH}/prebuilt"
 	local PATH_PREBUILT_COMMON="${PATH_PREBUILT}/common"
-	local PATH_PREBUILT_BOARD="${PATH_PREBUILT}/${DPT_BOARD_TYPE}"
+	local PATH_PREBUILT_BOARD="${PATH_PREBUILT}/${DPT_ARCH}/${DPT_BOARD_TYPE}"
 
 	local PATH_PREBUILT_FSBL="${PATH_PREBUILT_BOARD}/fsbl"
 	local PATH_PREBUILT_OPENSBI="${PATH_PREBUILT_BOARD}/opensbi"
@@ -69,9 +69,13 @@ function package_big() {
 		exit 1
 	fi
 
-	local PATH_KERNEL="${DPT_PATH_KERNEL}/bsp/cvitek/cv18xx_risc-v/Image"
+	if [[ $DPT_ARCH == "arm" ]]; then
+		local PATH_KERNEL="${DPT_PATH_KERNEL}/bsp/cvitek/cv18xx_aarch64/Image"
+	elif [[ $DPT_ARCH == "riscv" ]]; then
+		local PATH_KERNEL="${DPT_PATH_KERNEL}/bsp/cvitek/cv18xx_risc-v/Image"
+	fi
 
-	local PATH_PREBUILT="${DPT_PATH}/prebuilt"
+	local PATH_PREBUILT="${DPT_PATH}/prebuilt/${DPT_ARCH}"
 	local PATH_PREBUILT_BOARD="${PATH_PREBUILT}/${DPT_BOARD_TYPE}"
 
 	local PATH_PREBUILT_DTB="${PATH_PREBUILT_BOARD}/dtb"
@@ -138,6 +142,14 @@ fi
 
 if [ -z "$DPT_BOARD_TYPE" ]; then
 	DPT_BOARD_TYPE="duo256m"
+fi
+
+if [ -z "$DPT_ARCH" ]; then
+	DPT_ARCH="riscv"
+fi
+if [ "$DPT_ARCH" != "riscv" ] && [ "$DPT_ARCH" != "arm" ]; then
+	echo "Error: the DPT_ARCH value you entered is invalid. Please enter arm or riscv. and the default DPT_ARCH=riscv."
+	exit 1
 fi
 
 check_board_type $DPT_BOARD_TYPE

@@ -70,15 +70,15 @@ function copy_prebuilds() {
 	local board_fw_dynamic=$PATH_DUO_SDK/opensbi/build/platform/generic/firmware/fw_dynamic.bin
 	local board_uboot_raw=$PATH_DUO_SDK/u-boot-2021.10/build/$board_config/u-boot-raw.bin
 
-	cp $board_dtb $PATH_DUO_PKGTOOL/prebuilt/$board_type/dtb/$board_config.dtb
-	cp $board_multi_its $PATH_DUO_PKGTOOL/prebuilt/$board_type/dtb/multi.its
-	cp $board_bl2 $PATH_DUO_PKGTOOL/prebuilt/$board_type/fsbl/bl2.bin
-	cp $board_blmacros_env $PATH_DUO_PKGTOOL/prebuilt/$board_type/fsbl/blmacros.env
-	cp $board_chip_conf $PATH_DUO_PKGTOOL/prebuilt/$board_type/fsbl/chip_conf.bin
-	cp $board_ddr_param $PATH_DUO_PKGTOOL/prebuilt/$board_type/fsbl/ddr_param.bin
-	cp $board_empty $PATH_DUO_PKGTOOL/prebuilt/$board_type/fsbl/empty.bin
-	cp $board_fw_dynamic $PATH_DUO_PKGTOOL/prebuilt/$board_type/opensbi/fw_dynamic.bin
-	cp $board_uboot_raw $PATH_DUO_PKGTOOL/prebuilt/$board_type/uboot/u-boot-raw.bin
+	cp $board_dtb $PATH_DUO_PKGTOOL/prebuilt/riscv/$board_type/dtb/$board_config.dtb
+	cp $board_multi_its $PATH_DUO_PKGTOOL/prebuilt/riscv/$board_type/dtb/multi.its
+	cp $board_bl2 $PATH_DUO_PKGTOOL/prebuilt/riscv/$board_type/fsbl/bl2.bin
+	cp $board_blmacros_env $PATH_DUO_PKGTOOL/prebuilt/riscv/$board_type/fsbl/blmacros.env
+	cp $board_chip_conf $PATH_DUO_PKGTOOL/prebuilt/riscv/$board_type/fsbl/chip_conf.bin
+	cp $board_ddr_param $PATH_DUO_PKGTOOL/prebuilt/riscv/$board_type/fsbl/ddr_param.bin
+	cp $board_empty $PATH_DUO_PKGTOOL/prebuilt/riscv/$board_type/fsbl/empty.bin
+	cp $board_fw_dynamic $PATH_DUO_PKGTOOL/prebuilt/riscv/$board_type/opensbi/fw_dynamic.bin
+	cp $board_uboot_raw $PATH_DUO_PKGTOOL/prebuilt/riscv/$board_type/uboot/u-boot-raw.bin
 }
 
 while getopts ":h" opt
