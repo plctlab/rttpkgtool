@@ -54,6 +54,10 @@ $ DPT_PATH_KERNEL=/home/u/rt-thread DPT_BOARD_TYPE=duo256m DPT_PATH_OUTPUT=/home
 $ DPT_PATH_KERNEL=/home/u/rt-thread ./script/mkpkg.sh
 ```
 
+如需使用 Cortex-A53 作为大核，请添加 arm 参数，如下
+``` shell
+$ DPT_PATH_KERNEL=/home/u/rt-thread ./script/mkpkg.sh arm
+```
 ## 更新 prebuild 文件
 
 rttpkgtool 使用预制的 prebuild 二进制固件文件构建 duo 的 `fip.bin` 和 `boot.sd`。这些 prebuild 文件基于 duo-buildroot-sdk (<https://github.com/milkv-duo/duo-buildroot-sdk.git>) 构建得到，存放在 rttpkgtool 仓库的 `prebuilt` 目录下。

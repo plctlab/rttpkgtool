@@ -28,7 +28,7 @@ function package_little() {
 
 	local PATH_PREBUILT="${DPT_PATH}/prebuilt"
 	local PATH_PREBUILT_COMMON="${PATH_PREBUILT}/common"
-	local PATH_PREBUILT_BOARD="${PATH_PREBUILT}/${DPT_BOARD_TYPE}"
+	local PATH_PREBUILT_BOARD="${PATH_PREBUILT}/${CORE_ARCH}/${DPT_BOARD_TYPE}"
 
 	local PATH_PREBUILT_FSBL="${PATH_PREBUILT_BOARD}/fsbl"
 	local PATH_PREBUILT_OPENSBI="${PATH_PREBUILT_BOARD}/opensbi"
@@ -70,8 +70,11 @@ function package_big() {
 	fi
 
 	local PATH_KERNEL="${DPT_PATH_KERNEL}/bsp/cvitek/cv18xx_risc-v/Image"
+	if [[ $CORE_ARCH == "arm" ]]; then
+		 PATH_KERNEL="${DPT_PATH_KERNEL}/bsp/cvitek/cv18xx_aarch64/Image"
+	fi
 
-	local PATH_PREBUILT="${DPT_PATH}/prebuilt"
+	local PATH_PREBUILT="${DPT_PATH}/prebuilt/${CORE_ARCH}"
 	local PATH_PREBUILT_BOARD="${PATH_PREBUILT}/${DPT_BOARD_TYPE}"
 
 	local PATH_PREBUILT_DTB="${PATH_PREBUILT_BOARD}/dtb"
@@ -139,6 +142,20 @@ fi
 if [ -z "$DPT_BOARD_TYPE" ]; then
 	DPT_BOARD_TYPE="duo256m"
 fi
+
+# default riscv core
+CORE_ARCH="riscv"
+# Check arm core
+for arg in "$@"; do
+	echo "arg: $arg"
+    case "$arg" in
+        arm)
+            CORE_ARCH="arm"
+            # Only supported duo256m board
+            DPT_BOARD_TYPE="duo256m"
+            ;;
+    esac
+done
 
 check_board_type $DPT_BOARD_TYPE
 if [ $? -ne 0 ]; then
