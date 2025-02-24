@@ -54,6 +54,10 @@ $ DPT_PATH_KERNEL=/home/u/rt-thread DPT_BOARD_TYPE=duo256m DPT_PATH_OUTPUT=/home
 $ DPT_PATH_KERNEL=/home/u/rt-thread ./script/mkpkg.sh
 ```
 
+如需使用 Cortex-A53 作为大核，请添加 DPT_ARCH=arm 参数，如下
+``` shell
+$ DPT_PATH_KERNEL=/home/u/rt-thread DPT_ARCH=arm ./script/mkpkg.sh
+```
 ## 更新 prebuild 文件
 
 rttpkgtool 使用预制的 prebuild 二进制固件文件构建 duo 的 `fip.bin` 和 `boot.sd`。这些 prebuild 文件基于 duo-buildroot-sdk (<https://github.com/milkv-duo/duo-buildroot-sdk.git>) 构建得到，存放在 rttpkgtool 仓库的 `prebuilt` 目录下。
@@ -70,3 +74,4 @@ PATH_DUO_SDK=<path_duo_sdk> ./prebuild.sh
 
 `prebuild.sh` 会在构建成功后更新 rttpkgtool 仓库的 `prebuilt` 目录，并将构建 duo-buildroot-sdk 对应的 commit hash 值记录在 `prebuilt/commit_hash.txt` 下，方便以后回溯。
 
+对于 arm 的 prebuild 我们其实没有从 sdk 中从源码固件，而是默认使用了一套固定的版本，这个版本从 RTT 仓库中直接拿过来的，每次更新 prebuild 只涉及 riscv。这个在文档中可以标记为 FIXME，因为目前我们并没有长期维护 ARM 的计划 ：）
