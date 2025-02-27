@@ -2,7 +2,19 @@
 
 A simple package tool to pack RT-Thread kenrel into bootable images for duo family.
 
-# 操作步骤
+<!-- TOC -->
+
+- [rttpkgtool](#rttpkgtool)
+- [打包步骤](#打包步骤)
+	- [安装一些额外的外部依赖](#安装一些额外的外部依赖)
+	- [拉取 `rttpkgtool` 工具到本地](#拉取-rttpkgtool-工具到本地)
+	- [执行打包](#执行打包)
+- [烧录 SD 卡](#烧录-sd-卡)
+- [更新 prebuild 文件](#更新-prebuild-文件)
+
+<!-- /TOC -->
+
+# 打包步骤
 
 ## 安装一些额外的外部依赖
 
@@ -60,7 +72,52 @@ $ DPT_PATH_KERNEL=/home/u/rt-thread ./script/mkpkg.sh
 $ DPT_PATH_KERNEL=/home/u/rt-thread DPT_ARCH=arm ./script/mkpkg.sh
 ```
 
-## 更新 prebuild 文件
+# 烧录 SD 卡
+
+在 SD 卡上根据需要创建多个分区，确保第 1 个分区的分区格式为 `FAT32`，用于存放启动固件 `fip.bin` 和 `boot.sd` 文件，其他分区自行分配即可。
+
+将 SD 卡插入 PC 主机系统，假设为 Ubuntu，识别为 `/dev/sdb`，则第一个分区为 `/dev/sdb1`。将第一个分区挂载，假设挂载到 `~/ws/u-disk`。
+
+打包生成的 `fip.bin` 和 `boot.sd` 文件拷贝到 `~/ws/u-disk` 中。
+
+最后不要忘记卸载 SD 卡的分区。
+
+简单步骤以 duo256m 为例示例如下，供参考：
+
+```shell
+sudo mount /dev/sdb1 ~/ws/u-disk
+cd rttpkgtool
+sudo cp ./output/duo256m/* ~/ws/u-disk
+sudo umount ~/ws/u-disk
+```
+
+为方便使用，本仓库提供了一个快速烧录 SD 卡的脚本 `./script/sdcard.sh`。
+
+有关如何使用，执行：
+
+```shell
+$ ./script/sdcard.sh -h
+Usage:
+  [DEV=<path_dev>] ./sdcard.sh [-h] [board_type] [path_src] [path_dest]
+  - DEV: env variable, default as '/dev/sdb1' if not provided
+  - -h: display usage
+  - board_type: 'duo256m' if not provided
+  - path_src: <rttpkgtool>/output if not provided
+  - path_dest: '${HOME}/ws/u-disk' if not provided
+```
+
+以 duo256m 为例，插入 SD 卡烧录器后，可以直接执行该脚本：
+
+```shell
+$ ./script/sdcard.sh
+-> Mount /dev/sdb1 to /home/u/ws/u-disk successfully!
+-> Remove all the files in /home/u/ws/u-disk successfully!
+-> Copy all the files from /home/u/ws/duo/rttpkgtool/output/duo256m to /home/u/ws/u-disk successfully!
+-> Unmount /dev/sdb1 successfully!
+-> Done!
+```
+
+# 更新 prebuild 文件
 
 rttpkgtool 使用预制的 prebuild 二进制固件文件构建 duo 的 `fip.bin` 和 `boot.sd`。这些 prebuild 文件基于 duo-buildroot-sdk (<https://github.com/milkv-duo/duo-buildroot-sdk.git>) 构建得到，存放在 rttpkgtool 仓库的 `prebuilt` 目录下。
 
