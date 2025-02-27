@@ -51,7 +51,11 @@ if [ $? -ne 0 ]; then
 	echo "ERROR: Failed to mount ${DEV}!"
         exit 1
 fi
+echo "-> Mount ${DEV} to ${PATH_DEST} successfully!"
 sudo rm -f ${PATH_DEST}/*
+echo "-> Remove all the files in ${PATH_DEST} successfully!"
 sudo cp ${PATH_SRC}/${BOARD_TYPE}/* ${PATH_DEST}
-sudo umount ${PATH_DEST} 
-
+echo "-> Copy all the files from ${PATH_SRC}/${BOARD_TYPE} to ${PATH_DEST} successfully!"
+sudo umount ${PATH_DEST}
+echo "-> Unmount ${DEV} successfully!"
+echo "-> Done!"
