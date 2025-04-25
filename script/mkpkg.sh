@@ -5,115 +5,66 @@
 
 DPT_PATH=$(realpath $(dirname $0)/..)
 
-source ${DPT_PATH}/script/board_types.sh
+source ${DPT_PATH}/.config
+source ${DPT_PATH}/script/commit_hash.txt
 
 function usage() {
         echo "Usage:"
-        echo "  DPT_PATH_KERNEL=<path_kernel> [DPT_BOARD_TYPE=<board_type>] [DPT_PATH_OUTPUT=<path_output>] ./mkpkg.sh [-h|-l|-b|-a]"
-        echo "  -h: display usage"
-        echo "  -l: make little"
-        echo "  -b: make big"
-        echo "  -a: make all (both big and little)"
+        echo "  DPT_PATH_KERNEL=<path_kernel> \\"
+	echo "  [DPT_PATH_OUTPUT=<path_output>] \\"
+	echo "  [DPT_CROSS_COMPILE=<path_toolchain>] \\"
+	echo "  ./mkpkg.sh [-h] [-f]"
+	echo "  DPT_PATH_KERNEL: where the rtthread.bin is located, must be specified"
+	echo "  DPT_PATH_OUTPUT: where the output root directory is. Default is"
+	echo "                   \rttpkgtool/output' if not provided."
+	echo "  DPT_CROSS_COMPILE: the whole prefix of toolchain, Default is"
+	echo "                     '/opt/toolchain/Xuantie-900-gcc-linux-6.6.0-glibc-x86_64-V2.10.1/bin/riscv64-unknown-linux-gnu-'"
+	echo "                     if not provided."
+        echo "  -h: display usage, other options are ignored"
+	echo "  -f: clean and rebuild the package"
 }
 
-function package_little() {
-	local PATH_KERNEL="${DPT_PATH_KERNEL}/bsp/cvitek/c906_little/rtthread.bin"
+function download_opensbi()
+{
+	local project_path=$1/opensbi
+	local target_version=$2
+	local working_branch=branch-${target_version}
+	local url_opensbi="https://gitee.com/canmv-k230/opensbi.git"
 
-	if [[ ! -f "${PATH_KERNEL}" ]]; then
-		echo "ERROR: ${PATH_KERNEL} does not exist!\n"
-		return 1
+	echo "Trying to download the opensbi source code ......"
+	if [ ! -d ${project_path} ]; then
+		echo "${project_path} does not exist, clone it from ${url_opensbi}"
+		git clone ${url_opensbi} ${project_path}
+
+		if [ $? -ne 0 ]; then
+			echo "Failed to clone ${url_opensbi} !"
+			exit 1
+		fi
+
+		pushd ${project_path}
+	else
+		echo "${project_path} already exists."
+		pushd ${project_path}
+		git checkout canmv_k230
+		git pull
 	fi
-			
-	mkdir -p ${DPT_PATH_OUTPUT}/${DPT_BOARD_TYPE}
 
-	local PATH_PREBUILT="${DPT_PATH}/prebuilt"
-	local PATH_PREBUILT_COMMON="${PATH_PREBUILT}/common"
-	local PATH_PREBUILT_BOARD="${PATH_PREBUILT}/${DPT_ARCH}/${DPT_BOARD_TYPE}"
-
-	local PATH_PREBUILT_FSBL="${PATH_PREBUILT_BOARD}/fsbl"
-	local PATH_PREBUILT_OPENSBI="${PATH_PREBUILT_BOARD}/opensbi"
-	local PATH_PREBUILT_UBOOT="${PATH_PREBUILT_BOARD}/uboot"
-
-	if [ ! -x "${PATH_PREBUILT_COMMON}/fiptool.py" ]; then
-		echo "WARNING: '${PATH_PREBUILT_COMMON}/fiptool.py' is not executable. Adding executable permission..."
-		chmod +x "${PATH_PREBUILT_COMMON}/fiptool.py"
-	fi
-
-	source ${PATH_PREBUILT_FSBL}/blmacros.env && \
-	${PATH_PREBUILT_COMMON}/fiptool.py -v genfip \
-	${DPT_PATH_OUTPUT}/${DPT_BOARD_TYPE}/fip.bin \
-	--MONITOR_RUNADDR="${MONITOR_RUNADDR}" \
-	--BLCP_2ND_RUNADDR="${BLCP_2ND_RUNADDR}" \
-	--CHIP_CONF=${PATH_PREBUILT_FSBL}/chip_conf.bin \
-	--NOR_INFO='FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF' \
-	--NAND_INFO=00000000 \
-	--BL2=${PATH_PREBUILT_FSBL}/bl2.bin \
-	--BLCP_IMG_RUNADDR=0x05200200 \
-	--BLCP_PARAM_LOADADDR=0 \
-	--BLCP=${PATH_PREBUILT_FSBL}/empty.bin \
-	--DDR_PARAM=${PATH_PREBUILT_FSBL}/ddr_param.bin \
-	--BLCP_2ND=${PATH_KERNEL} \
-	--MONITOR=${PATH_PREBUILT_OPENSBI}/fw_dynamic.bin \
-	--LOADER_2ND=${PATH_PREBUILT_UBOOT}/u-boot-raw.bin \
-	--compress=lzma
+	# For both cases:
+	
+	# delete the branch with the same name if any and no error reported
+	git branch -D $working_branch &>/dev/null
+	git checkout $target_version -b $working_branch
+	popd
 }
 
-function package_big() {
-	if ! command -v mkimage > /dev/null 2>&1 ; then
-		echo "ERROR: mkimage is missing. Run 'apt install u-boot-tools' to install it." 
-		exit 1
-	fi
-
-	if ! command -v lzma > /dev/null 2>&1 ; then
-		echo "ERROR: lzma is missing. Run 'apt install xz-utils' to install it." 
-		exit 1
-	fi
-
-	if [[ $DPT_ARCH == "arm" ]]; then
-		local PATH_KERNEL="${DPT_PATH_KERNEL}/bsp/cvitek/cv18xx_aarch64/Image"
-	elif [[ $DPT_ARCH == "riscv" ]]; then
-		local PATH_KERNEL="${DPT_PATH_KERNEL}/bsp/cvitek/cv18xx_risc-v/Image"
-	fi
-
-	local PATH_PREBUILT="${DPT_PATH}/prebuilt/${DPT_ARCH}"
-	local PATH_PREBUILT_BOARD="${PATH_PREBUILT}/${DPT_BOARD_TYPE}"
-
-	local PATH_PREBUILT_DTB="${PATH_PREBUILT_BOARD}/dtb"
-
-	if [[ ! -f "${PATH_KERNEL}" ]]; then
-		echo "ERROR: ${PATH_KERNEL} does not exist!\n"
-		return 1
-	fi
-			
-	mkdir -p ${DPT_PATH_OUTPUT}/${DPT_BOARD_TYPE}
-
-	lzma -c -9 -f -k ${PATH_KERNEL} > ${PATH_PREBUILT_DTB}/Image.lzma
-	mkimage -f ${PATH_PREBUILT_DTB}/multi.its -r ${DPT_PATH_OUTPUT}/${DPT_BOARD_TYPE}/boot.sd
-
-	if [ -f "${PATH_PREBUILT_DTB}/Image.lzma" ]; then
-		rm -rf "${PATH_PREBUILT_DTB}/Image.lzma"
-	fi
-}
-
-function package_all() {
-	package_little
-	package_big
-}
-
-while getopts ":habl" opt
+while getopts ":hf" opt
 do
         case $opt in
         h)
                 O_HELP=y
                 ;;
-        a)
-                O_MAKE_ALL=y
-                ;;
-	b)
-		O_MAKE_BIG=y
-		;;
-	l)
-		O_MAKE_LITTLE=y
+	f)
+		O_FORCE=y
 		;;
         ?)
                 echo "there is unrecognized parameter."
@@ -134,67 +85,81 @@ if [ -z "$DPT_PATH_KERNEL" ]; then
 	usage
 	exit 1
 fi
-if [ ! -d "${DPT_PATH_KERNEL}" ]; then
-	echo "ERROR: The kernel directory you inputted is invalid. Please try again!"
-	usage
-	exit 1
-fi
-
-if [ -z "$DPT_BOARD_TYPE" ]; then
-	DPT_BOARD_TYPE="duo256m"
-fi
-
-if [ -z "$DPT_ARCH" ]; then
-	DPT_ARCH="riscv"
-fi
-if [ "$DPT_ARCH" != "riscv" ] && [ "$DPT_ARCH" != "arm" ]; then
-	echo "Error: the DPT_ARCH value you entered is invalid. Please enter arm or riscv. and the default DPT_ARCH=riscv."
-	exit 1
-fi
-
-check_board_type $DPT_BOARD_TYPE
-if [ $? -ne 0 ]; then
-	echo "ERROR: The board type you inputted is invalid. Please try again!"
-	print_supported_board_types
+if [ ! -f "${DPT_PATH_KERNEL}/rtthread.bin" ]; then
+	echo "ERROR: The rtthread.bin does not exist. Please check again!"
 	usage
 	exit 1
 fi
 
 if [ -z "$DPT_PATH_OUTPUT" ]; then
-	DPT_PATH_OUTPUT="${DPT_PATH}/output"
-fi
-if [ ! -d "${DPT_PATH_OUTPUT}" ]; then
-	echo "WARNING: The output directory you inputted does not exit, create it!"
-	mkdir -p "${DPT_PATH_OUTPUT}"
+	DPT_PATH_OUTPUT=${DPT_PATH}/output
 fi
 
-if [ "$O_MAKE_ALL" = "y" ]; then
-	pack_config="a"
-elif [ "$O_MAKE_BIG" = "y" ]; then
-	pack_config="b"
-elif [ "$O_MAKE_LITTLE" = "y" ]; then
-	pack_config="l"
-else
-	pack_config="a"
+if [ -z "$DPT_CROSS_COMPILE" ]; then
+	DPT_CROSS_COMPILE="/opt/toolchain/Xuantie-900-gcc-linux-6.6.0-glibc-x86_64-V2.10.1/bin/riscv64-unknown-linux-gnu-"
 fi
+if [ ! -x "${DPT_CROSS_COMPILE}gcc" ]; then
+	echo "ERROR: The toolchain does not exist, please check again!"
+	usage
+	exit 1
+fi
+
+export SDK_SRC_ROOT_DIR=${DPT_PATH}
+export SDK_TOOLS_DIR=${SDK_SRC_ROOT_DIR}/tools
+export SDK_OPENSBI_SRC_DIR=${DPT_PATH_OUTPUT}/src
+export SDK_BUILD_DIR=${DPT_PATH_OUTPUT}/${CONFIG_BOARD_CONFIG_NAME}
+export SDK_BUILD_IMAGES_DIR=${SDK_BUILD_DIR}/images
+export SDK_OPENSBI_BUILD_DIR=${SDK_BUILD_DIR}/opensbi
 
 printf "\n"
 printf "DPT_PATH_KERNEL: '$DPT_PATH_KERNEL'\n"
-printf "DPT_BOARD_TYPE:  '$DPT_BOARD_TYPE'\n"
 printf "DPT_PATH_OUTPUT: '$DPT_PATH_OUTPUT'\n"
-printf "pack_option:     '-${pack_config}'\n\n"
+printf "DPT_CROSS_COMPILE: '$DPT_CROSS_COMPILE'\n"
+printf "SDK_BUILD_IMAGES_DIR: '$SDK_BUILD_IMAGES_DIR'\n"
+printf "SDK_OPENSBI_BUILD_DIR:  '$SDK_OPENSBI_BUILD_DIR'\n"
 
-case $pack_config in
-	a)
-		package_all
-		;;
-	b)
-		package_big
-		;;
-	l)
-		package_little
-		;;
-	*)
-		package_all
-		;;
-esac
+# Check dependencies ...
+if ! command -v mkimage > /dev/null 2>&1 ; then
+	echo "ERROR: mkimage is missing. Run 'apt install u-boot-tools' to install it." 
+	exit 1
+fi
+
+if [ "$O_FORCE" = "y" ]; then
+	rm -rf ${DPT_PATH_OUTPUT}
+fi
+
+if [ ! -d "${SDK_OPENSBI_BUILD_DIR}" ]; then
+	echo "WARNING: The opensbi build directory does not exit, create it!"
+	mkdir -p "${SDK_OPENSBI_BUILD_DIR}"
+fi
+if [ ! -d "${SDK_BUILD_IMAGES_DIR}" ]; then
+	echo "WARNING: The images directory does not exit, create it!"
+	mkdir -p "${SDK_BUILD_IMAGES_DIR}"
+fi
+
+if [ ! -d "${SDK_OPENSBI_SRC_DIR}" ]; then
+	echo "WARNING: The opensbi source directory does not exit, create it!"
+	mkdir -p "${SDK_OPENSBI_SRC_DIR}"
+fi
+download_opensbi ${SDK_OPENSBI_SRC_DIR} ${CURRENT_COMMIT_HASH_OPENSBI}
+
+rm -rf ${SDK_OPENSBI_BUILD_DIR}/opensbi.bin
+rm -rf ${SDK_OPENSBI_SRC_DIR}/opensbi/rtthread.bin
+cp ${DPT_PATH_KERNEL}/rtthread.bin ${SDK_OPENSBI_SRC_DIR}/opensbi/
+pushd ${SDK_OPENSBI_SRC_DIR}/opensbi
+export PLATFORM=kendryte/fpgac908
+make -j ${nproc} FW_FDT_PATH=hw.dtb FW_PAYLOAD_PATH=rtthread.bin \
+     O=${SDK_OPENSBI_BUILD_DIR} OPENSBI_QUIET=1 \
+     CROSS_COMPILE=${DPT_CROSS_COMPILE}
+popd
+
+cp ${SDK_OPENSBI_BUILD_DIR}/platform/kendryte/fpgac908/firmware/fw_payload.bin ${SDK_OPENSBI_BUILD_DIR}/opensbi.bin
+
+${DPT_PATH}/script/gen_image
+if [ ! -f "${SDK_BUILD_IMAGES_DIR}/opensbi/opensbi_rtt_system.bin" ]; then
+	echo "ERROR: Failed to generate the image file!"
+	exit 1
+fi
+
+echo "Generate the image file successfully!"
+echo "The image file is located at ${SDK_BUILD_IMAGES_DIR}/opensbi/opensbi_rtt_system.bin"

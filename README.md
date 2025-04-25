@@ -1,12 +1,13 @@
-# rttpkgtool
+**rttpkgtool**
 
-A simple package tool to pack RT-Thread kenrel into bootable images for duo family.
+A simple package tool to pack RT-Thread kenrel into bootable images for canmv-k230 family.
+Currently only support "k230_rtos_01studio_defconfig".
 
 <!-- TOC -->
 
-- [rttpkgtool](#rttpkgtool)
 - [打包步骤](#打包步骤)
 	- [安装一些额外的外部依赖](#安装一些额外的外部依赖)
+	- [安装交叉工具链](#安装交叉工具链)
 	- [拉取 `rttpkgtool` 工具到本地](#拉取-rttpkgtool-工具到本地)
 	- [执行打包](#执行打包)
 - [烧录 SD 卡](#烧录-sd-卡)
@@ -20,15 +21,30 @@ A simple package tool to pack RT-Thread kenrel into bootable images for duo fami
 
 ``` shell
 $ sudo apt update
-$ sudo apt install u-boot-tools xz-utils
+$ sudo apt install u-boot-tools patch
 ```
 
-u-boot-tools 包含了打包需要的 mkimage, xz-utils 包含了打包需要的 lzma。
+u-boot-tools 包含了打包需要的 mkimage, patch 包含了 prebuild 需要的 patch。
+
+## 安装交叉工具链
+
+打包过程中需要编译 opensbi，所以需要安装交叉工具链。安装方法：
+
+- 方法一：随 K230 RTOS Only SDK 一同安装，参考 <https://developer.canaan-creative.com/k230_rtos/zh/dev/userguide/how_to_build.html>。其中 “4.3 初始化工具链” 会下载安装交叉工具链。
+
+- 方法二：如果不想安装 K230 RTOS Only SDK，也可以自己手动独立安装工具链。
+
+```shell
+$ sudo mkdir -p /opt/toolchain
+$ cd /opt/toolchain
+$ sudo wget https://kendryte-download.canaan-creative.com/k230/toolchain/Xuantie-900-gcc-linux-6.6.0-glibc-x86_64-V2.10.1-20240712.tar.gz
+$ sudo tar xzf Xuantie-900-gcc-linux-6.6.0-glibc-x86_64-V2.10.1-20240712.tar.gz
+```
 
 ## 拉取 `rttpkgtool` 工具到本地
 
 ``` shell 
-$ git clone git@github.com:plctlab/rttpkgtool.git
+$ git clone -b for-k230 git@github.com:plctlab/rttpkgtool.git
 ```
 
 进入 rttpkgtool 目录，后面的操作都在该目录下进行。
@@ -41,55 +57,38 @@ $ cd rttpkgtool
 
 命令的格式为:
 
-`DPT_PATH_KERNEL=<path_kernel> [DPT_BOARD_TYPE=<board_type>] [DPT_PATH_OUTPUT=<path_output>] [DPT_ARCH=<select_arch>] ./mkpkg.sh  [-h/-l/-b/-a]`                                              
+```shell
+DPT_PATH_KERNEL=<path_kernel> [DPT_PATH_OUTPUT=<path_output>] [DPT_CROSS_COMPILE=<path_toolchain>] ./mkpkg.sh [-h] [-f]
+```
 
 - 含有 `[]` 的项是可以省略的 
-- 环境变量 `DPT_PATH_KERNEL`(必选): rt-thread 仓库的绝对路径（路径名包括 `rt-thread`），通过该路径，package tool 才可以找到 RT-Thread 的 kernel image，即 `rtthread.bin`。
-- 环境变量 `DPT_BOARD_TYPE`（可选）: 开发板的类型，目前支持 `duo`，`duo256m`, `duos` 三种开发板类型。不指定该选项，默认采用 `duo256m`。
-- 环境变量 `DPT_PATH_OUTPUT`（可选）: 输出的绝对路径。各个板子的输出再按照子目录存放在 `DPT_PATH_OUTPUT` 下。不指定该选项，默认输出在 `rttpkgtool/output` 下。
-- 环境变量 `DPT_ARCH`（可选）: 选择芯片大核架构，可选择 `riscv` 和 `arm` 两种架构。不指定该选项，默认采用 `riscv`。
-- 命令行选项 `-h`/`-l`/`-b`/`-a`: 
+- 环境变量 `DPT_PATH_KERNEL`(必选): `rtthread.bin` 文件所在的绝对路径。
+- 环境变量 `DPT_PATH_OUTPUT`（可选）: 输出的绝对路径。不指定该选项，默认输出在 `rttpkgtool/output` 下。
+- 环境变量 `DPT_CROSS_COMPILE`（可选）: 打包过程中会编译 opensbi，这里指定交叉编译的工具链前缀（含路径）。不指定该选项，默认路径是 `/opt/toolchain/Xuantie-900-gcc-linux-6.6.0-glibc-x86_64-V2.10.1/bin/riscv64-unknown-linux-gnu-`。
+- 命令行选项 `-h`/`-f`: 
   - `-h`: 打印帮助信息后直接退出。
-  - `-l`：只对小核进行打包，即只生成 `fip.bin`。
-  - `-b`：只对大核进行打包，即只生成 `boot.sd`。
-  - `-a`：对大核和小核都进行打包，即同时生成 `fip.bin` 和 `boot.sd`。
-  如果出现多个命令行选项，优先级 `-h` > `-a` > `-b` > `-l`。如果不指定命令行选项，则等同于 `-a`。
+  - `-f`：会清理输出（删除 `DPT_PATH_OUTPUT`）后重新编译。
+  如果出现多个命令行选项，优先级 `-h` > `-f`。如果不指定命令行选项，则不清理输出，直接重新打包。
 
 示例如下:
 
 ``` shell
-$ DPT_PATH_KERNEL=/home/u/rt-thread DPT_BOARD_TYPE=duo256m DPT_PATH_OUTPUT=/home/u/rttokgtool/output DPT_ARCH=riscv./script/mkpkg.sh -a
+$ DPT_PATH_KERNEL=/home/u/ws/canaan/rt-thread/bsp/k230 ./script/mkpkg.sh -f
 ```
 
 或者
 
 ``` shell
-$ DPT_PATH_KERNEL=/home/u/rt-thread ./script/mkpkg.sh
+$ DPT_PATH_KERNEL=/home/u/ws/canaan/rt-thread/bsp/k230 ./script/mkpkg.sh
 ```
 
-如需使用 Cortex-A53 作为大核，请添加 DPT_ARCH=arm 参数，如下
-``` shell
-$ DPT_PATH_KERNEL=/home/u/rt-thread DPT_ARCH=arm ./script/mkpkg.sh
-```
+打包完成后，生成的包含 RT-Thread 内核的 opensbi 二进制文件位置在：`${DPT_PATH_OUTPUT}/k230_rtos_01studio_defconfig/images/opensbi/opensbi_rtt_system.bin`。我们可以拿它来单独更新内核。
 
 # 烧录 SD 卡
 
-在 SD 卡上根据需要创建多个分区，确保第 1 个分区的分区格式为 `FAT32`，用于存放启动固件 `fip.bin` 和 `boot.sd` 文件，其他分区自行分配即可。
+参考 K230 RTOS Only SDK 用户指南中的 “如何编译固件”：<https://developer.canaan-creative.com/k230_rtos/zh/dev/userguide/how_to_build.html> 生成一个完整的 image。然后参考 K230 RTOS Only SDK 用户指南中的 “如何烧录固件”：<https://developer.canaan-creative.com/k230_rtos/zh/dev/userguide/how_to_flash.html>, 通过 SD 卡烧录。熟悉 Windows 平台的可以使用 balenaEtcher。烧录后，SD 卡上会自动分区和格式化。**注意以上操作只要做一次**。
 
-将 SD 卡插入 PC 主机系统，假设为 Ubuntu，识别为 `/dev/sdb`，则第一个分区为 `/dev/sdb1`。将第一个分区挂载，假设挂载到 `~/ws/u-disk`。
-
-打包生成的 `fip.bin` 和 `boot.sd` 文件拷贝到 `~/ws/u-disk` 中。
-
-最后不要忘记卸载 SD 卡的分区。
-
-简单步骤以 duo256m 为例示例如下，供参考：
-
-```shell
-sudo mount /dev/sdb1 ~/ws/u-disk
-cd rttpkgtool
-sudo cp ./output/duo256m/* ~/ws/u-disk
-sudo umount ~/ws/u-disk
-```
+后面就可以单独更新内核固件了。
 
 为方便使用，本仓库提供了一个快速烧录 SD 卡的脚本 `./script/sdcard.sh`。
 
@@ -98,39 +97,36 @@ sudo umount ~/ws/u-disk
 ```shell
 $ ./script/sdcard.sh -h
 Usage:
-  [DEV=<path_dev>] ./sdcard.sh [-h] [board_type] [path_src] [path_dest]
-  - DEV: env variable, default as '/dev/sdb1' if not provided
-  - -h: display usage
-  - board_type: 'duo256m' if not provided
-  - path_src: <rttpkgtool>/output if not provided
-  - path_dest: '${HOME}/ws/u-disk' if not provided
+  [SRC=<path_src>] [DEST=<path_dest>] ./mksd.sh [-h]
+  - SRC: path of input file, default as
+         '${SDK_BUILD_IMAGES_DIR}/opensbi/opensbi_rtt_system.bin' if not provided
+  - DEST: path of output file, default as '/dev/sdb' if not provided
+  - -h: display usage, other options are ignored
 ```
 
-以 duo256m 为例，插入 SD 卡烧录器后，可以直接执行该脚本：
+以 01Studio CanMV-K230 开发板为例，插入 SD 卡烧录器后，可以直接执行该脚本：
 
 ```shell
 $ ./script/sdcard.sh
--> Mount /dev/sdb1 to /home/u/ws/u-disk successfully!
--> Remove all the files in /home/u/ws/u-disk successfully!
--> Copy all the files from /home/u/ws/duo/rttpkgtool/output/duo256m to /home/u/ws/u-disk successfully!
--> Unmount /dev/sdb1 successfully!
--> Done!
+SRC:  /home/u/ws/rttpkgtool/output/k230_rtos_01studio_defconfig/images/opensbi/opensbi_rtt_system.bin
+DEST: /dev/sdb
+[sudo] password for u: 
+767+1 records in
+767+1 records out
+393140 bytes (393 kB, 384 KiB) copied, 0.101348 s, 3.9 MB/s
+Done!
 ```
 
 # 更新 prebuild 文件
 
-rttpkgtool 使用预制的 prebuild 二进制固件文件构建 duo 的 `fip.bin` 和 `boot.sd`。这些 prebuild 文件基于 duo-buildroot-sdk (<https://github.com/milkv-duo/duo-buildroot-sdk.git>) 构建得到，存放在 rttpkgtool 仓库的 `prebuilt` 目录下。
+rttpkgtool 直接引用了 K230 RTOS Only SDK 中的脚本和工具程序（我们称这些 SDK 提供的脚本和工具程序为 prebuild 文件）进行打包。如果 K230 RTOS Only SDK 升级了，则也有可能需要同步升级这些 prebuild 文件。rttpkgtool 软件包提供了一个更新 prebuild 文件的脚本工具 `./script/prebuild.sh`。
 
-如果 duo-buildroot-sdk 升级了，则也有可能需要同步升级这些 perbuild 文件。rttpkgtool 软件包提供了一个制作 prebuild 文件的脚本工具 `./script/prebuild.sh`。
-
-可以通过运行如下命令制作 prebuild 文件：
+可以通过运行如下命令更新 prebuild 文件：
 
 ```shell
-PATH_DUO_SDK=<path_duo_sdk> ./prebuild.sh
+PATH_K230_RTT_SDK=<path_to_k230_rtos_sdk> ./script/prebuild.sh
 ```
 
-`PATH_DUO_SDK` 用于指定 duo-buildroot-sdk 的文件系统路径。注意 `prebuild.sh` 本身不负责下载 duo-buildroot-sdk 以及切换分支等操作，使用者需要自行下载该仓库并将其路径并在运行 `prebuild.sh` 脚本时通过 `PATH_DUO_SDK` 传入。
+`PATH_K230_RTT_SDK` 用于指定 K230 RTOS Only SDK 的文件系统路径。注意 `prebuild.sh` 本身不负责下载 K230 RTOS Only SDK 以及切换分支等操作，使用者需要自行下载该仓库并将其路径并在运行 `prebuild.sh` 脚本时通过 `PATH_K230_RTT_SDK` 传入。
 
-`prebuild.sh` 会在构建成功后更新 rttpkgtool 仓库的 `prebuilt` 目录，并将构建 duo-buildroot-sdk 对应的 commit hash 值记录在 `prebuilt/commit_hash.txt` 下，方便以后回溯。
-
-FIXME: 因为目前我们并没有长期维护 ARM 大核的计划，所以对于 arm 的 prebuild 文件，并没有和 riscv 一样基于 duo sdk 中从源码构建，而是简化处理，直接借用了 RT-Thread 仓库中的现有 prebuild 文件。所以目前更新 prebuild 文件时只涉及 riscv 的内容。
+`prebuild.sh` 会在构建成功后更新 rttpkgtool 仓库的相关目录和文件，并将构建 K230 RTOS Only SDK 对应的 commit hash 值记录在 `scropt/commit_hash.txt` 下，方便以后回溯。

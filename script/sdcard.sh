@@ -3,59 +3,44 @@
 
 function usage() {
         echo "Usage:"
-        echo "  [DEV=<path_dev>] ./sdcard.sh [-h] [board_type] [path_src] [path_dest]"
-        echo "  - DEV: env variable, default as '/dev/sdb1' if not provided"
-        echo "  - -h: display usage"
-        echo "  - board_type: 'duo256m' if not provided"
-        echo "  - path_src: <rttpkgtool>/output if not provided"
-        echo "  - path_dest: '\${HOME}/ws/u-disk' if not provided"
+        echo "  [SRC=<path_src>] [DEST=<path_dest>] ./mksd.sh [-h]"
+        echo "  - SRC: path of input file, default as"
+        echo "         '\${SDK_BUILD_IMAGES_DIR}/opensbi/opensbi_rtt_system.bin' if not provided"
+        echo "  - DEST: path of output file, default as '/dev/sdb' if not provided"
+        echo "  - -h: display usage, other options are ignored"
 }
 
 DPT_PATH=$(realpath $(dirname $0)/..)
 
-source ${DPT_PATH}/script/board_types.sh
+source ${DPT_PATH}/.config
 
 if [ "$1" = "-h" ]; then
 	usage
         exit 0
 fi
 
-if [ -z "$DEV" ]; then
-        DEV="/dev/sdb1"
+if [ -z "${SRC}" ]; then
+	SRC=${DPT_PATH}/output/${CONFIG_BOARD_CONFIG_NAME}/images/opensbi/opensbi_rtt_system.bin
 fi
-BOARD_TYPE=$1
-PATH_SRC=$2
-PATH_DEST=$3
 
-if [ -z "${BOARD_TYPE}" ]; then
-	BOARD_TYPE="duo256m"
+if [ -z "${DEST}" ]; then
+        DEST=/dev/sdb
 fi
-check_board_type $BOARD_TYPE
-if [ $? -ne 0 ]; then
-	echo "ERROR: The board type you inputted is invalid. Please try again!"
-	print_supported_board_types
+
+echo "SRC:  $SRC"
+echo "DEST: $DEST"
+
+if [ ! -f "${SRC}" ]; then
+	echo "ERROR: The input file '${SRC}' does not exist. Please check again!"
+	usage
+	exit 1
+fi
+if [ ! -b "${DEST}" ]; then
+	echo "ERROR: The output file '${DEST}' does not exist. Please check again!"
 	usage
 	exit 1
 fi
 
-if [ -z "${PATH_SRC}" ]; then
-	PATH_SRC="${DPT_PATH}/output"
-fi
+sudo dd if=${SRC} of=${DEST} seek=20480
 
-if [ -z "${PATH_DEST}" ]; then
-        PATH_DEST="${HOME}/ws/u-disk"
-fi
-
-sudo mount ${DEV} ${PATH_DEST}
-if [ $? -ne 0 ]; then
-	echo "ERROR: Failed to mount ${DEV}!"
-        exit 1
-fi
-echo "-> Mount ${DEV} to ${PATH_DEST} successfully!"
-sudo rm -f ${PATH_DEST}/*
-echo "-> Remove all the files in ${PATH_DEST} successfully!"
-sudo cp ${PATH_SRC}/${BOARD_TYPE}/* ${PATH_DEST}
-echo "-> Copy all the files from ${PATH_SRC}/${BOARD_TYPE} to ${PATH_DEST} successfully!"
-sudo umount ${PATH_DEST}
-echo "-> Unmount ${DEV} successfully!"
-echo "-> Done!"
+echo "Done!"

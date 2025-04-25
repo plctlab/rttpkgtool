@@ -1,0 +1,6 @@
+###########################################################################################
+# This file is used to record the commit hash values corresponding to the latest prebuilds.
+###########################################################################################
+CURRENT_COMMIT_HASH_MANIFEST=23e3483d523252ad671a65e6cc81e353236d8fb0
+CURRENT_COMMIT_HASH_CANMV_K230=75662ae2713e1fde710c6bbbb8c3c532488dfe9e
+CURRENT_COMMIT_HASH_OPENSBI=1de130df4d57c842fde979b23e0e866ab0311486
