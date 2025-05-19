@@ -2,12 +2,19 @@
 # This tool is used to copy the image files to the SD card.
 
 function usage() {
-        echo "Usage:"
-        echo "  [SRC=<path_src>] [DEST=<path_dest>] ./mksd.sh [-h]"
-        echo "  - SRC: path of input file, default as"
-        echo "         '\${SDK_BUILD_IMAGES_DIR}/opensbi/opensbi_rtt_system.bin' if not provided"
-        echo "  - DEST: path of output file, default as '/dev/sdb' if not provided"
-        echo "  - -h: display usage, other options are ignored"
+	echo "Usage:"
+	echo "  [SRC=<path_src>] [DEST=<path_dest>] ./mksd.sh [-h]"
+	echo "  - SRC: path of input file, default as"
+	echo "         '\${SDK_BUILD_IMAGES_DIR}/opensbi/opensbi_rtt_system.bin' if not provided"
+	echo "  - DEST: path of output file, default as '/dev/sdb' if not provided"
+	echo "  - -h: display usage, other options are ignored"
+	echo " RETURN: 0: success, 1: input file not exist, 2: output file not exist"
+	echo " EXAMPLE:"
+	echo "  SRC=/path/to/opensbi_rtt_system.bin DEST=/dev/sdb ./mksd.sh"
+	echo "  SRC=/path/to/opensbi_rtt_system.bin ./mksd.sh"
+	echo "  ./mksd.sh -h"
+	echo ""
+	echo " NOTE: The script must be run with root privileges."
 }
 
 DPT_PATH=$(realpath $(dirname $0)/..)
@@ -38,7 +45,7 @@ fi
 if [ ! -b "${DEST}" ]; then
 	echo "ERROR: The output file '${DEST}' does not exist. Please check again!"
 	usage
-	exit 1
+	exit 2
 fi
 
 sudo dd if=${SRC} of=${DEST} seek=20480
