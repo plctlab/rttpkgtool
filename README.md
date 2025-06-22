@@ -26,6 +26,14 @@ $ sudo apt install u-boot-tools patch
 
 u-boot-tools 包含了打包需要的 mkimage, patch 包含了 prebuild 需要的 patch。
 
+
+此外还需要安装一些 python 的软件包。这里默认本地已经安装了 python3-pip。另外，这里采用清华源是为了加快安装速度。
+
+```shell
+$ pip3 install pycryptodome -i https://pypi.tuna.tsinghua.edu.cn/simple
+$ pip3 install gmssl -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
 ## 安装交叉工具链
 
 打包过程中需要编译 opensbi，所以需要安装交叉工具链。安装方法：
